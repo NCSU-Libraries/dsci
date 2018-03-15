@@ -20,17 +20,17 @@ Each MARC record is converted into a document that has the rough structure:
 ```json
 {
     "id" : "12345",
-    "leader" : ..,
-    "001" : ...,
-    ...
-    "009" : ...,
-    "field_010_a" : [ ..., ..., ... ],
-    ...
-    "tags": [ "001", ..., "999" ]
+    "leader" : "...",
+    "001" : "...",
+    "003" : "...",
+    "009" : "...",
+    "field_010_a" : [ "...", "...", "..." ],
+    "json_doesn't support comments": "...",
+    "tags": [ "001", "...", "999" ]
 }
 ```
 
-That is, for each document, it outputs an 'id' value (which has to be
+That is, for each document, it outputs an `id` value (which has to be
 extractable from the MARC record), the textual value of the leader and any of
 the control fields (tags 001-009) as simple values.
 
@@ -38,7 +38,7 @@ Data fields (tag 010-999) get mapped out into their subfields into field names t
 
 "field_{tag}_{subfield}"
 
-Additionally, the record will have a "tags" field which is simply an array of
+Additionally, the record will have a `tags` field which is simply an array of
 all the tags that were found in the record.
 
 All fields, with the exception of the ID field, will be automatically created for you as they are encountered
@@ -48,7 +48,7 @@ in documents sent to Solr. They will be tagged as type `text_general`,
 When these documents are inserted into Solr, you can do things like:
 
     $ # find all the documents with no 001
-    $ curl http://localhost:8983/dsci/select?q=tag:\(NOT 001\)
+    $ curl http://localhost:8983/solr/dsci/select?q=tag:\(NOT 001\)
 
     $ # the goofy query from the intro
     $ curl http://localhost:8983/solr/dsci/select?q=field_856_a:Yoink\!
@@ -61,14 +61,21 @@ window.
 ## Wait, What, Solr?  Don't I need a System Administrator to Set That Up?
 
 Probably, if you want to do things in production.  But this is aimed at *D*ead
-*S*implicity, and I am willing to cut a few corners in pursuit of that goal.  So here's all you may need to do:
+*S*implicity, and I am willing to cut a few corners in pursuit of that goal.  
+So here's all you may need to do:
 
 1. Download [Apache Solr]([https://lucene.apache.org/solr/)
 2. Unpack Solr
-3. Start Solr in "Cloud" mode
+3. Start Solr in "Cloud" mode:
+    
+    
     $ cd $SOLR_DIR
     $ bin/solr -c start
+    
+
 4. Build and run the application
+    
+    
     $ cd /path/where/you/cloned/this/respository/at
     $ ./gradlew shadowJar # or ./gradlew.bat on Windows
     $ java -jar  build/libs/dsci.jar -c marc/*.xml
@@ -76,6 +83,17 @@ Probably, if you want to do things in production.  But this is aimed at *D*ead
 Sorry about the paths if you're on Windows, but I hope you can figure it out.
 
 If you have Ruby installed on your system, you can use TRLN's [solrtasks](https://github.com/trln/solrtasks) gem to install solr and start it.  Or not, whatever's simpler for you!
+
+### "Pile of MARC"?
+
+After all the options, come a bunch of filenames which are understood as containing MARC;
+if the filename ends in `.xml` then it will be processed as if it were MARCXML, otherwise
+it will be processed as MARC21 (binary) format.  You can override the extension-based detection
+by passing the `-f xml` (or `-f marc21`) parameter.
+
+If it breaks here (and it might because it assumes MARC21 means MARC-8, but it might not), you might look
+into using `yaz-marcdump` (part of the [yaz](https://github.com/indexdata/yaz) toolkit by IndexData) to 
+convert to UTF-8 encoded MARCXML. 
 
 ### Wait, What is this project written in? Java?  Groovy?
 
@@ -131,10 +149,10 @@ The simplest form is to write a Groovy closure, put it in a file, and use an opt
 
 And, when the application is run, it will compile whatever's in the `id.groovy`
 file to a closure, and call that closure on each record to get the ID.  An
-example, matching the 'lower case' idea above, woudl be:
+example, matching the 'lower case' idea above, would be:
 
 ```groovy
-# id.groovy
+// id.groovy
 { rec -> 
     rec.getVariableField('915')?.getSubfield('a'.charAt(0))?.data?.toLowerCase()
 }
@@ -146,7 +164,7 @@ lowercase that.  The `?` in there are for null-safety -- in general you should t
 The above is roughly equivalent to:
 
 ```groovy
-# id.groovy
+// id.groovy
 { rec ->
     try { 
         rec.getVariableField('915').getSubfield('a'.charAt(0)).data
@@ -156,7 +174,8 @@ The above is roughly equivalent to:
 }
 ```
 
-The argument to the closure will always be an `org.marc4j.marc.Record` object, and will never be `null`.
+The argument to the closure will always be an [`org.marc4j.marc.Record`](https://github.com/marc4j/marc4j/blob/master/src/org/marc4j/marc/Record.java)
+ object, and will never be `null`.
 
 If you like more type-safety, or don't want to use Groovy (or you do, but want
 to use a proper class), you can use the bells-and-whistles form: `-id
