@@ -1,0 +1,7 @@
+solr/
+.gradle/
+build/
+.idea/
+*.iml
+*.project
+*.classpath

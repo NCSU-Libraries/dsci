@@ -1,0 +1,29 @@
+plugins {
+    id 'groovy'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+mainClassName = 'edu.ncsu.lib.dsci.Main'
+
+shadowJar {
+    archiveName = 'dsci.jar'
+}
+
+dependencies {
+    compile     'org.marc4j:marc4j:2.8.3'
+    compile     'org.apache.solr:solr-solrj:7.2.1'
+    compile     'commons-cli:commons-cli:1.4'
+    compile     'org.codehaus.groovy:groovy-all:2.4.14'
+    compile     'com.google.guava:guava:24.0-jre'
+    compile     'org.slf4j:slf4j-api:1.7.25'
+    compile     'org.slf4j:slf4j-simple:1.7.25'
+    compile     'org.apache.logging.log4j:log4j:2.10.0'
+    testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
+}
+    
