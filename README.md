@@ -86,7 +86,7 @@ Probably, if you want to do things in production.  But this is aimed at *D*ead
 *S*implicity, and I am willing to cut a few corners in pursuit of that goal.  
 So here's all you may need to do:
 
-1. Download [Apache Solr]([https://lucene.apache.org/solr/)
+1. Download [Apache Solr](https://lucene.apache.org/solr/)
 2. Unpack Solr
 3. Start Solr in "Cloud" mode:
     
@@ -132,8 +132,24 @@ location to download the JDK is from https://openjdk.java.net/.  JDK version 8 i
 The JRE (Java Runtime Environment) you might have lying around to run Java in
 your browser (which you should probably delete anyway) is not sufficient.
 
-When building the project, use the 'gradle wrapper' (`gradlew` or `gradlew.bat` in the
-root directory) to run your builds, and it will download all the stuff you need.
+## Building and Running
+
+The tool used to build the `dsci.jar` is named Gradle; the `.jar` file is
+executable via 
+
+    $ java -jar dsci.jar
+
+and it contains all the compoents, including third-party libraries, needed to
+index and "talk to" Solr.  Once it is built (it is always created in
+`build/libs`), it can be copied to any location and executed there.
+
+If you use the "gradle wrapper" script (`gradlew` or `gradlew.bat` on Windows)
+to run the build, you don't need to have Gradle installed on your system to run
+the build.
+
+The `dsci.jar` application supports a number of arguments and options, which you can read about by running it with the `-help` option, like so:
+
+    $ java -jar dsci.jar -help
 
 ### OK, IDs, where did those IDs come from?
 
@@ -208,14 +224,15 @@ class=<class name>`.  I'll just provide hints for this, because it's advanced
 usage and to use this you really have to know a bit about how Java/Groovy
 projects are structured in order to use it.
 
-#. Create a directory in `src/main/groovy` to hold your class (or put it in
+1. Create a directory in `src/main/groovy` to hold your class (or put it in
 `edu/ncsu/lib/dsci`, your call), 
-#. write a class that implements the
+2. write a class that implements the
 `edu.ncsu.lib.dsci.IDExtractor` interface.  Your class must have a no-argument
 constructor.
-#. Rebuild the project with ./gradlew shadowJar
+3. Rebuild the project with `./gradlew shadowJar`
 
-This is all *advanced usage*, so sorry if your eyes glazed over.  I hope the 'spec' thing covers most cases.
+This is all *advanced usage*, so sorry if your eyes glazed over.  I hope the
+'spec' thing covers most cases.
 
 ## Files!  JSON!
 
@@ -223,38 +240,29 @@ A run of the indexer will also create a passel of files named `solr_NNNNN.json`
 in the `solr` subdirectory of the current directory.  This is sort of as a
 backup, but these files are 'concatenated' json that match what's sent to Solr.
 
-Currently there is no way to disable creation of these files.  But they're useful to look at
-to help you learn what's going on.
+Currently there is no way to disable creation of these files.  But they're
+useful to look at to help you learn what's going on.
 
-A side effect of the creation of these files is that we have learned all the
+A side effect of creating all this JSON is that we learn all the
 fields that would be created, so if you want to take these files and create a
 Solr index on a different Solr instance and ingest them manually, you can do
-that.  The `add-files.json` file can be POSTed to your Solr instance's Schema
-Admin API URL ($SOLR_URL/$COLLECTION_NAME/schema) and it will add all the
+that.
+
+If you run the application with the `--json` option, it will not attempt to
+write to Solr, and will just create the JSON files.
+
+The `solr/add-files.json` file can be POSTed to your Solr instance's Schema
+Admin API URL (`$SOLR_URL/$COLLECTION_NAME/schema`) and it will add all the
 fields at one go. 
 
 ## A Note About Field Creation
 
 If the Solr server doesn't have a collection named `dsci`, it will be created
-on startup.  It will also be recreated if 
-you specify the `--reset` option on the command line.  If the collection is
-being recreated and the 'solr/add-fields.json` file exists, it will be used to
-add all the fields found in the documents up front, which can take a while.
+on startup (unless you pass in the `--json` option).  
 
-## More Info?
-
-   $ java -jar build/libs/dsci.jar -help
-
-Will tell you a bit about how you can run the application, including specifying the Solr URL if it's different from the default, 
-how to reset the collection, etc., and how to just generate the JSON, if you don't want to index directly.
-
-After you've build the application with
-
-    $ ./gradlew shadowJar
-
-You can copy `build/libs/dsci.jar` and run it from wherever with
-
-    $ java -jar dsci.jar [filenames]
+It will also be recreated if you specify the `--reset` option on the command
+line.  If the collection is being recreated and the 'solr/add-fields.json` file
+already exists, it will be used to add all the fields found in the documents up front.
 
 ### Neat, I Guess, But I Want To ...
 
