@@ -25,6 +25,7 @@ Each MARC record is converted into a document that has the rough structure:
     "003" : "...",
     "009" : "...",
     "field_010_a" : [ "...", "...", "..." ],
+    "field_856_ind" : [ "40", "00" ], 
     "json_doesn't support comments": "...",
     "tags": [ "001", "...", "999" ]
 }
@@ -37,6 +38,12 @@ the control fields (tags 001-009) as simple values.
 Data fields (tag 010-999) get mapped out into their subfields into field names that follow the pattern:
 
 "field_{tag}_{subfield}"
+
+Field indicators get mapped to a field named "field_{tag}_ind", which will be an array of two-character strings.
+
+Finally, the complete text of the field is mapped out to
+
+"field_{tag}"
 
 Additionally, the record will have a `tags` field which is simply an array of
 all the tags that were found in the record.
@@ -62,10 +69,16 @@ When these documents are inserted into Solr, you can do things like:
     $ # find documents with a 510 that doesn't have a subfield b
     $ curl http://localhost:8984/solr/dsci/select?q=tags:510+AND+-\(field_510_b:\*\)
 
+    $ # find documents with an 856 where ind1 = '4'
+    $ curl http://localhost:8984/solr/dsci/select?q=field_856_ind:4?
 
 Note the above have been escaped for direct use in the shell.  The backslash
 characters (`\`) should be removed if you want to paste the URLs into a browser
 window.
+
+As a usage hint, if you're just interested int eh values of certain fields (the documents get pretty expansive), use the `fl` parameter, e.g. for that last query to just show the IDs and the values of the 856 fields, you can do this:
+
+    $ http://localhost:8984/solr/dsci/select?q=field_856_ind:4?\&fl=id,field_856
 
 ## Wait, What, Solr?  Don't I need a System Administrator to Set That Up?
 
@@ -95,26 +108,29 @@ If you have Ruby installed on your system, you can use TRLN's [solrtasks](https:
 
 ### "Pile of MARC"?
 
-After all the options, come a bunch of filenames which are understood as containing MARC;
-if the filename ends in `.xml` then it will be processed as if it were MARCXML, otherwise
-it will be processed as MARC21 (binary) format.  You can override the extension-based detection
-by passing the `-f xml` (or `-f marc21`) parameter.
+The last arguments on the command line are a bunch of filenames which are
+understood as containing MARC; for each filename, if it ends in `xml` it will
+be processed as if it were MARCXML, otherwise it will be processed as MARC21
+(binary) format.  You can override the extension-based detection by passing the
+`-f xml` (or `-f marc21`) parameter.
 
-If it breaks here (and it might because it assumes MARC21 means MARC-8, but it might not), you might look
-into using `yaz-marcdump` (part of the [yaz](https://github.com/indexdata/yaz) toolkit by IndexData) to 
-convert to UTF-8 encoded MARCXML. 
+If it breaks here (and it might because it assumes MARC21 means the records are
+encoded using MARC-8, but it might not because the reader tries to adapt), you
+might look into using `yaz-marcdump` (part of the
+[yaz](https://github.com/indexdata/yaz) toolkit by IndexData) to convert to
+UTF-8 encoded MARCXML. 
 
 ### Wait, What is this project written in? Java?  Groovy?
 
 You'll need it to run Solr anyhow.  But other than having the `java`
 executable on your PATH, you shouldn't need anything other than the contents of this
 repository.  Make sure you use a
-*Java Development* Kit (JDK) installation, as that's what's needed to compile things; a suitable
-location to download this is from http://openjdk.java.net/.  
+*Java Development* Kit (JDK) installation, as that's what's needed to compile
+things; a suitable
+location to download the JDK is from https://openjdk.java.net/.  JDK version 8 is recommended.
 
 The JRE (Java Runtime Environment) you might have lying around to run Java in
 your browser (which you should probably delete anyway) is not sufficient.
-
 
 When building the project, use the 'gradle wrapper' (`gradlew` or `gradlew.bat` in the
 root directory) to run your builds, and it will download all the stuff you need.
@@ -249,5 +265,3 @@ Feature requests in the form of issues filed on this repository will be entertai
 It's actually complicated enough under the hood.  You should feel free to fork, if it's not working out for you.
 
 MIT License.
-
-

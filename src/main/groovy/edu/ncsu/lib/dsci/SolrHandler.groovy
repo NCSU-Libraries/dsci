@@ -37,7 +37,6 @@ class SolrHandler implements Closeable {
         def req = new SchemaRequest.Fields()
         def resp = client.request(req)
         foundFields.addAll( resp.fields.collect { it.name } )
-        println(foundFields)
         definedSolrFields = foundFields
     }
 
@@ -77,7 +76,7 @@ class SolrHandler implements Closeable {
         }
     }
 
-    public void close() {
+    void close() {
         client.commit()
         client.close()
         log.info("Processed ${documentCount} records in total")

@@ -19,7 +19,6 @@ class RecordMapper {
     public def seenFields = new HashSet()
 
     def mapRecord(Record record) {
-
         def result = [:].withDefault { key ->
             []
         }
@@ -46,6 +45,8 @@ class RecordMapper {
         }
         record.getDataFields().each { DataField df ->
             result.tags << df.tag
+            result["field_${df.tag}"] << df.toString()
+            result["field_${df.tag}_ind"] << "${String.valueOf(df.indicator1)}${String.valueOf(df.indicator2)}"
             String fieldSpec = "field_${df.tag}"
             if (df.getSubfields().isEmpty() ) {
                 result[fieldSpec] << df.toString()
@@ -56,9 +57,8 @@ class RecordMapper {
                 }
             }
         }
-        if ( result.hasProperty('tags') ) {
-            result.tags = result.tags.unique().sort()
-        }
+        result.tags = result.tags.unique().sort()
+        //record which fields we've seen
         result.keySet().each { key -> seenFields << key }
         result
     }

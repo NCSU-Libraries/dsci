@@ -6,6 +6,10 @@ import groovy.util.logging.Slf4j
 
 import java.nio.charset.StandardCharsets
 
+/**
+ * Writes Solr ingest documents in batches of no larger than 50000 to
+ * the <code>solr</code> subdirectory.
+ */
 @CompileStatic
 @Slf4j
 class BatchHandler implements RecordHandler, Closeable {
