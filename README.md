@@ -93,19 +93,23 @@ Probably, if you want to do things in production.  But this is aimed at *D*ead
 *S*implicity, and I am willing to cut a few corners in pursuit of that goal.  
 So here's all you may need to do:
 
-1. Download [Apache Solr](https://lucene.apache.org/solr/)
+1. Download [Apache Solr](https://lucene.apache.org/solr/) (I strongly recommend you verify the package integrity).
 2. Unpack Solr
 3. Start Solr in "Cloud" mode:
 
-      ```$ cd $SOLR_DIR
-      $ bin/solr -c start```
+      ```
+      $ cd $SOLR_DIR
+      $ bin/solr -c start
+      ```
 4. Build and run the application
       
-      ```$ cd /path/where/you/cloned/this/respository/at
+      ```
+      $ cd /path/where/you/cloned/this/respository/at
       $ ./gradlew shadowJar # or ./gradlew.bat on Windows
-      $ java -jar  build/libs/dsci.jar -c marc/*.xml```
+      $ java -jar  build/libs/dsci.jar -c marc/*.xml
+      ```
 
-Sorry about the paths if you're on Windows, but I hope you can figure it out.
+Sorry about the paths if you're on Windows, but I hope you can figure it out.  This was tested against Solr 7.2.1.
 
 If you have Ruby installed on your system, you can use TRLN's [solrtasks](https://github.com/trln/solrtasks) gem to install solr and start it.  Or not, whatever's simpler for you!
 
@@ -132,7 +136,9 @@ that's what's needed to compile things; on Linux, you should probably use a
 packaged distribution, e.g. `java-1.8.0-openjdk-devel` on Red Hat and
 derivatives, and `openjdk-8-jdk` on Debian/Ubuntu and friends.
 
-JDK version 8 is recommended. 
+On Windows, [OpenJDK](http://openjdk.java.net/install) is recommended, but since they currently lack an HTTPS download, we won't judge you if you use [Azul Zulu](https://www.azul.com/downloads/zulu/zulu-windows/) builds.  [Oracle](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) is another option, but note they also seem to not support HTTPS.
+
+_JDK version 8 is strongly recommended._
 
 The JRE (Java Runtime Environment) you might have lying around to run Java in
 your browser (which you should probably delete anyway) is not sufficient.
