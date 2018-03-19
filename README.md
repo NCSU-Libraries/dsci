@@ -25,6 +25,7 @@ Each MARC record is converted into a document that has the rough structure:
     "003" : "...",
     "009" : "...",
     "field_010_a" : [ "...", "...", "..." ],
+    "field_010": "010  $a 12345678"
     "field_856_ind" : [ "40", "00" ], 
     "json_doesn't support comments": "...",
     "tags": [ "001", "...", "999" ]
@@ -35,28 +36,33 @@ That is, for each document, it outputs an `id` value (which has to be
 extractable from the MARC record), the textual value of the leader and any of
 the control fields (tags 001-009) as simple values.
 
-Data fields (tag 010-999) get mapped out into their subfields into field names that follow the pattern:
+Data fields (tag 010-999) get written out as a string under the field name:
 
-"field_{tag}_{subfield}"
+`field_{tag}`
+ 
+And subfields are mapped into field names that follow the pattern:
 
-Field indicators get mapped to a field named "field_{tag}_ind", which will be an array of two-character strings.
+`field_{tag}_{subfield}`
 
-Finally, the complete text of the field is mapped out to
+Field indicators get mapped to a field named 
 
-"field_{tag}"
+`field_{tag}_ind`, which will be an array of two-character strings.
 
-Additionally, the record will have a `tags` field which is simply an array of
-all the tags that were found in the record.
+Although it's a bit redundant, the record will have a `tags` field which is simply an array of
+all the tags that were found in the record.  This makes some queries easier to write.
 
-It assumes that you're using the 'data driven schema' configuration (which is the default in the most recent
+The setup uses the 'data driven schema' configuration (which is the default in the most recent
 versions of Solr), which is fine for general uses but clashes a bit with the field names emitted by the indexer,
-for example the default schema says any field with a name ending in `_i` should be understood to be an integer, `_f` is
-a floating point number, etc.  We can get around this without having to create a schema ourselves by ensuring
+for example the default schema says any field with a name ending in `_i` (which would
+be used for any field with a subfield `$i`) should be understood to be an integer, `_f` is
+a floating point number, etc.  
+
+We get around this without having to directly create a schema ourselves by ensuring
 that each field we encounter is given an explicit definition.  It adds a bit of overhead at runtime.
 
 All fields, with the exception of the ID field, will be automatically created for you as they are encountered
-in documents sent to Solr. They will be tagged as type `text_general`,
-`stored`, `indexed`, and `multiValued`.
+in documents sent to Solr. They will be tagged as type `text_general` (this definition
+comes from the data driven schema), `stored`, `indexed`, and `multiValued`.  
 
 When these documents are inserted into Solr, you can do things like:
 
@@ -89,15 +95,15 @@ So here's all you may need to do:
 1. Download [Apache Solr](https://lucene.apache.org/solr/)
 2. Unpack Solr
 3. Start Solr in "Cloud" mode:
-    
-    
+
+
     $ cd $SOLR_DIR
     $ bin/solr -c start
-    
+
 
 4. Build and run the application
-    
-    
+
+
     $ cd /path/where/you/cloned/this/respository/at
     $ ./gradlew shadowJar # or ./gradlew.bat on Windows
     $ java -jar  build/libs/dsci.jar -c marc/*.xml
@@ -111,7 +117,7 @@ If you have Ruby installed on your system, you can use TRLN's [solrtasks](https:
 The last arguments on the command line are a bunch of filenames which are
 understood as containing MARC; for each filename, if it ends in `xml` it will
 be processed as if it were MARCXML, otherwise it will be processed as MARC21
-(binary) format.  You can override the extension-based detection by passing the
+(aka binary, aka ISO 2709) format.  You can override the extension-based detection by passing the
 `-f xml` (or `-f marc21`) parameter.
 
 If it breaks here (and it might because it assumes MARC21 means the records are
@@ -137,9 +143,9 @@ your browser (which you should probably delete anyway) is not sufficient.
 The tool used to build the `dsci.jar` is named Gradle; the `.jar` file is
 executable via 
 
-    $ java -jar dsci.jar
+    $ java -jar /path/to/dsci.jar
 
-and it contains all the compoents, including third-party libraries, needed to
+and it contains all the components, including third-party libraries, needed to
 index and "talk to" Solr.  Once it is built (it is always created in
 `build/libs`), it can be copied to any location and executed there.
 
@@ -149,7 +155,7 @@ the build.
 
 The `dsci.jar` application supports a number of arguments and options, which you can read about by running it with the `-help` option, like so:
 
-    $ java -jar dsci.jar -help
+    $ java -jar dsci.jar --help
 
 ### OK, IDs, where did those IDs come from?
 
@@ -157,7 +163,8 @@ Document IDs are special in Solr -- they must be unique, and if you 'add' a
 document which has the same ID of a document already in the index, you're
 really overwriting it.  So they're kind of important.
 
-By default, the process will look in the `001` field and use that as the ID.
+By default, the process will look in the `001` (aka "Control Number") field and use that as the ID.
+
 Maybe your records aren't like that, though, and you keep them in a `9xx` field
 or maybe you have some more complex logic (e.g. "look in the `001`, if that's
 not there, concatenate the `912$d` and the `915$z`, but remove any character
@@ -169,14 +176,13 @@ IDs based on those, to wit:
 
     $ java -jar build/lib/dsci.jar -id spec=001 marc/*.mrc
 
-Will give you the default behavior, i.e. it will use whatever it finds in the
-001 field, also known as the "Control Number" for the record, as the document
-ID.
+Will give you the default behavior for IDs.
 
     $ java -jar build/lib/dsci.jar -id spec='918$a' marc/*.mrc
 
-Will extract the ID from the `918` subfield `a`.  Note you MUST use the quotes
-around your specifier if it contains the `$` character.
+Will extract the ID from the `918` subfield `a`.  Note you MUST use the single 
+quotes around your specifier if it contains the `$` character (assuming you're using 
+a `bash` or similar shell).
 
 ### But my IDs *are* more complex than that!
 
@@ -246,7 +252,7 @@ useful to look at to help you learn what's going on.
 A side effect of creating all this JSON is that we learn all the
 fields that would be created, so if you want to take these files and create a
 Solr index on a different Solr instance and ingest them manually, you can do
-that.
+that.  This file is `solr/add-fields.json`
 
 If you run the application with the `--json` option, it will not attempt to
 write to Solr, and will just create the JSON files.
@@ -261,7 +267,7 @@ If the Solr server doesn't have a collection named `dsci`, it will be created
 on startup (unless you pass in the `--json` option).  
 
 It will also be recreated if you specify the `--reset` option on the command
-line.  If the collection is being recreated and the 'solr/add-fields.json` file
+line.  If the collection is being recreated and the `solr/add-fields.json` file
 already exists, it will be used to add all the fields found in the documents up front.
 
 ### Neat, I Guess, But I Want To ...

@@ -36,7 +36,6 @@ class RecordMapper {
             return Collections.emptyMap()
         }
         result['leader'] = record.getLeader().toString()
-        result['record_type'] = record.getLeader().getTypeOfRecord();
 
         record.getControlFields().each {
             ControlField cf ->

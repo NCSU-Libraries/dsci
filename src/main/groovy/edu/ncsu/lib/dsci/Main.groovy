@@ -5,7 +5,8 @@ import groovy.util.logging.Slf4j
 import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.impl.HttpSolrClient
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
-import org.marc4j.MarcStreamReader
+import org.marc4j.MarcPermissiveStreamReader
+import org.marc4j.MarcReader
 import org.marc4j.MarcXmlReader
 
 @Slf4j
@@ -27,7 +28,7 @@ class Main {
     If the 'id' option is not specified, use value from 001 for ID.
 """
         CliBuilder cli = new CliBuilder(usage: 'dsci.jar [options] [files]')
-        cli.help('print this message')
+        cli.h(longOpt:'help', 'Show this message')
 
         cli.u(longOpt: 'solr', args: 1, argName: 'url', 'URL to a (running) Solr instance (minus any collection name)')
         cli.id(args:2, valueSeparator: '=', argName: 'idtype=value', specDesc)
@@ -154,13 +155,20 @@ class Main {
                 def fmt = Main.detectFormat(options, marcFile)
                 log.info("[${fileCount}] processing ${marcFile.name} (fmt:${fmt})")
 
-
+                long recFileCount = 0
                 marcFile.withInputStream { inputStream ->
-                    def reader = fmt.endsWith("xml") ? new MarcXmlReader(inputStream) : new MarcStreamReader(inputStream, "MARC-8")
-                    while (reader.hasNext()) {
-                        handler.accept(mapper.mapRecord(reader.next()))
+                    MarcReader reader = fmt.endsWith("xml") ? new MarcXmlReader(inputStream) : new MarcPermissiveStreamReader(inputStream,true, true)
+                    try {
+                        while (reader.hasNext()) {
+                            handler.accept(mapper.mapRecord(reader.next()))
+                            recFileCount++
+                        }
+                    } catch ( Exception e ) {
+                        log.error("Unhandled exception processing ${marcFile.name}", e)
                     }
+
                 }
+                log.info("Finished ${marcFile.name}.  Processed ${recFileCount} records from ${marcFile.length()} bytes")
         }
         handler.close()
         solrHandler?.close()

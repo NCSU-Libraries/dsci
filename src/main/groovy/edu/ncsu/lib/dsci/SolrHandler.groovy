@@ -41,17 +41,17 @@ class SolrHandler implements Closeable {
     }
 
     @Subscribe
-    public void addDocument(docMap) {
+    void addDocument(docMap) {
         SolrInputDocument solrDoc = new SolrInputDocument()
         Set unknownFields = new HashSet()
-        docMap.each { k, v ->
+        docMap.each { String k, Object v ->
             if ( ! definedSolrFields.contains( k ) ) {
                 unknownFields << k
             }
             solrDoc.setField(k, v)
         }
         if ( !unknownFields.empty ) {
-            log.info("issuing commit for existing documents in order to add fields")
+            log.info("issuing commit for existing documents in order to add fields ${unknownFields}")
             client.commit()
             unknownFields.each { f ->
                 log.debug("Adding definition for previously unknown field ${f}")
