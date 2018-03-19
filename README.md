@@ -25,9 +25,10 @@ Each MARC record is converted into a document that has the rough structure:
     "003" : "...",
     "009" : "...",
     "field_010_a" : [ "...", "...", "..." ],
-    "field_010": "010  $a 12345678"
+    "field_010": [ "010  $a 12345678" ],
+    "json doesn't support comments so here's an ellipsis": "...",
+    "field_010_ind": [ "  " ],
     "field_856_ind" : [ "40", "00" ], 
-    "json_doesn't support comments": "...",
     "tags": [ "001", "...", "999" ]
 }
 ```
@@ -73,10 +74,10 @@ When these documents are inserted into Solr, you can do things like:
     $ curl http://localhost:8983/solr/dsci/select?q=field_856_a:Yoink\!
     
     $ # find documents with a 510 that doesn't have a subfield b
-    $ curl http://localhost:8984/solr/dsci/select?q=tags:510+AND+-\(field_510_b:\*\)
+    $ curl http://localhost:8983/solr/dsci/select?q=tags:510+AND+-\(field_510_b:\*\)
 
     $ # find documents with an 856 where ind1 = '4'
-    $ curl http://localhost:8984/solr/dsci/select?q=field_856_ind:4?
+    $ curl http://localhost:8983/solr/dsci/select?q=field_856_ind:4?
 
 Note the above have been escaped for direct use in the shell.  The backslash
 characters (`\`) should be removed if you want to paste the URLs into a browser
@@ -84,7 +85,7 @@ window.
 
 As a usage hint, if you're just interested int eh values of certain fields (the documents get pretty expansive), use the `fl` parameter, e.g. for that last query to just show the IDs and the values of the 856 fields, you can do this:
 
-    $ http://localhost:8984/solr/dsci/select?q=field_856_ind:4?\&fl=id,field_856
+    $ http://localhost:8983/solr/dsci/select?q=field_856_ind:4?\&fl=id,field_856
 
 ## Wait, What, Solr?  Don't I need a System Administrator to Set That Up?
 
@@ -96,17 +97,13 @@ So here's all you may need to do:
 2. Unpack Solr
 3. Start Solr in "Cloud" mode:
 
-
-    $ cd $SOLR_DIR
-    $ bin/solr -c start
-
-
+      ```$ cd $SOLR_DIR
+      $ bin/solr -c start```
 4. Build and run the application
-
-
-    $ cd /path/where/you/cloned/this/respository/at
-    $ ./gradlew shadowJar # or ./gradlew.bat on Windows
-    $ java -jar  build/libs/dsci.jar -c marc/*.xml
+      
+      ```$ cd /path/where/you/cloned/this/respository/at
+      $ ./gradlew shadowJar # or ./gradlew.bat on Windows
+      $ java -jar  build/libs/dsci.jar -c marc/*.xml```
 
 Sorry about the paths if you're on Windows, but I hope you can figure it out.
 
@@ -128,12 +125,14 @@ UTF-8 encoded MARCXML.
 
 ### Wait, What is this project written in? Java?  Groovy?
 
-You'll need it to run Solr anyhow.  But other than having the `java`
-executable on your PATH, you shouldn't need anything other than the contents of this
-repository.  Make sure you use a
-*Java Development* Kit (JDK) installation, as that's what's needed to compile
-things; a suitable
-location to download the JDK is from https://openjdk.java.net/.  JDK version 8 is recommended.
+You'll need it to run Solr anyhow.  But other than having the `java` executable
+on your PATH, you shouldn't need anything other than the contents of this
+repository.  Make sure you use a *Java Development* Kit (JDK) installation, as
+that's what's needed to compile things; on Linux, you should probably use a
+packaged distribution, e.g. `java-1.8.0-openjdk-devel` on Red Hat and
+derivatives, and `openjdk-8-jdk` on Debian/Ubuntu and friends.
+
+JDK version 8 is recommended. 
 
 The JRE (Java Runtime Environment) you might have lying around to run Java in
 your browser (which you should probably delete anyway) is not sufficient.
