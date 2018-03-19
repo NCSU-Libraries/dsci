@@ -13,6 +13,23 @@ the Solr index creation for you.  When it's done, you should be able to query
 the resulting index to answer various low-level collection-spanning questions
 such as the above.
 
+## Other Projects Like This
+
+[marcgrep](https://github.com/marktriggs/marcgrep), which, unlike DSCI, provides an interface and exports in various formats.
+[marcgrep.pl](http://www.pusc.it/bib/MARCgrep) this one uses Perl.
+
+Apart from the complete lack of UI in this project, the primary differentiator
+is the use of Apache Solr, which means it has an up-front 'cost' (time and disk
+space) involved in creating and populating the index.  I hope this up front
+cost is paid back by speed in retrieving the data once it's up and running, and
+the ability to update the index over time by ingesting updated versions of the
+files, without significantly changing the query time. 
+
+DSCI also does not provide any direct mechanism for retrieving the original
+records!  To the extent that there is a vision for this project, it's as a
+component in a larger system, or for people who just like to write Solr queries
+by hand. 
+
 ## What It Does (This Time With More Detail)
 
 Each MARC record is converted into a document that has the rough structure:
