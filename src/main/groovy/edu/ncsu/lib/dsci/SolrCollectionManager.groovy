@@ -16,14 +16,15 @@ class SolrCollectionManager {
 
     String baseUrl
 
-    String collectionName = "dsci"
+    String collectionName
 
     Collection knownFields = new HashSet()
 
     Map<String, ?> standardFieldDef = Collections.unmodifiableMap([ type: 'text_general', multiValued: true, stored: true, indexed: true ])
 
-    SolrCollectionManager(String solrUrl = "http://localhost:8983/solr") {
+    SolrCollectionManager(String solrUrl = "http://localhost:8983/solr", String collName = "dsci" ) {
         this.baseUrl = solrUrl
+        this.collectionName = collName
     }
 
     private void deleteCollection(SolrClient client) {

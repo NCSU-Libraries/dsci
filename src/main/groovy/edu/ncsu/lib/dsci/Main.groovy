@@ -17,14 +17,14 @@ class Main {
         def specDesc = """Specify method for extracting IDs from records.
 
     Allowable 'idtype' values:
-    
+
     spec=<spec> use value of field[\$subfield], e.g. '001' => use 001
                 '919\$e' -- use 918 subfield e
-                
+
     class=<class> name of a class (must be available on classpath) that extracts the ID. See README.md for more info
-    
+
     closure=<closure file> path to a file containing the source of a Groovy closure that can be used to extract IDs (see README.md)
-    
+
     If the 'id' option is not specified, use value from 001 for ID.
 """
         CliBuilder cli = new CliBuilder(usage: 'dsci.jar [options] [files]')
@@ -35,6 +35,7 @@ class Main {
         cli.f(longOpt:'format', args:1, argName: 'format', 'Force interpretation of input files as having format "marc21" or "marcxml"')
         cli._(longOpt: 'json', args: 1, argName: 'outputDir', 'Does not write to Solr directly, only creates JSON files in <outputDir>')
         cli._(longOpt: 'reset', "Creates the 'dsci' collection")
+        cli.n(longOpt: 'collName', args:1, argName: 'cName', "Set the name for collection if not 'dsci'")
         cli.stopAtNonOption
         cli.expandArgumentFiles
         cli
@@ -76,10 +77,10 @@ class Main {
         return 'marc21'
     }
 
-    static boolean collectionExists(String solrUrl) {
+    static boolean collectionExists(String solrUrl, String collName) {
         try {
             SolrClient cl = new HttpSolrClient.Builder(solrUrl).build()
-            return CollectionAdminRequest.listCollections(cl).contains("dsci")
+            return CollectionAdminRequest.listCollections(cl).contains(collName)
         } catch( Exception x ) {
             log.error("Error communicating with solr.  Is it running and listening at ${solrUrl}?")
             log.error(x.message)
@@ -110,15 +111,18 @@ class Main {
         if ( solrUrl == null ) {
             solrUrl = 'http://localhost:8983/solr'
         }
+        def collName = options.n ? options.n : 'dsci'
+        if ( collName == null ) {
+          collName = 'dsci'
+        }
 
-
-        if ( options.reset || !collectionExists(solrUrl)) {
+        if ( options.reset || !collectionExists(solrUrl, collName)) {
             if ( options.reset ) {
                 log.info("'reset' option was specified, so we're going to create the collection")
             } else {
-                log.info("'dsci' collection was not found in Solr, so we will create it.")
+                log.info("'${collName}' collection was not found in Solr, so we will create it.")
             }
-            SolrCollectionManager collectionManager = new SolrCollectionManager(solrUrl)
+            SolrCollectionManager collectionManager = new SolrCollectionManager(solrUrl, collName)
 
             File knownFieldsFile = new File("solr", "add-fields.json")
 
@@ -136,7 +140,7 @@ class Main {
         SolrHandler solrHandler
 
         if ( !options.json ) {
-            solrHandler = new SolrHandler(solrUrl, "dsci")
+            solrHandler = new SolrHandler(solrUrl, collName)
             handler.solrHandler = solrHandler
         }
 
