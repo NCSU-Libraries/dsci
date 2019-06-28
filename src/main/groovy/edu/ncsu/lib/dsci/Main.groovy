@@ -54,7 +54,7 @@ class Main {
             Class.forName(value, true, this.getClass().getClassLoader()).newInstance()
         } else if ( idType == 'closure' ) {
             log.debug("Using groovy closure from ${value} for ID")
-            compileClosureFromString(File(value).text) as IDExtractor
+            compileClosureFromString(new File(value).text) as IDExtractor
         } else {
             System.err.println("Don't understand id type '${idType}")
             null
